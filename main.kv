@@ -160,16 +160,16 @@ Screen_Manager:
                 text: 'Start Accelerometer'
                 on_press: root.do_toggle()
                 disabled: True if (graph_button.state == 'down') else False
-                #on_state:
-                #	app.start(1000, 0) if self.state == 'down' else \
-                #	app.stop()
+                on_state:
+                	app.start(1000, 0) if self.state == 'down' else \
+                	app.stop()
                 
 			ToggleButton:
                 id: graph_button
                 text: 'Show Graph'
                 on_press: root.show_graph()
                 disabled: True if (toggle_button.state == 'normal') else False
-                
+
                 
 <PopupWin>:
     size_hint: .9, None
@@ -184,10 +184,11 @@ Screen_Manager:
         Label:
             size_hint_y: None
             height: dp(40)
-        	text: 'Accident Alert has been sent ...'
+            text: 'Accident Alert has been sent ...'
         	
         Button:
             text: 'Dismiss'
             size_hint_y: None
             height: dp(40)
             on_press: root.dismiss()
+	    
