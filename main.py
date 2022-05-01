@@ -225,7 +225,7 @@ class AccidentAlertApp(App):
     @mainthread
     def on_location(self, **kwargs):
         self.gps_location = '\n'.join([
-            ' {} = {}'.format(k, v) for k, v in kwargs.items()])
+            '{}={}'.format(k, v) for k, v in kwargs.items()])
 
     @mainthread
     def on_status(self, stype, status):
