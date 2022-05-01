@@ -16,6 +16,7 @@ from plyer import gps
 from kivy_garden.graph import Graph, MeshLinePlot
 from kivy.clock import mainthread
 from kivy.utils import platform
+from certifi.__main__ import args
 
 class PresplashWin(Screen):
     pass
@@ -23,9 +24,11 @@ class PresplashWin(Screen):
 class AccelerometerWin(Screen):
     
     graph_added = BooleanProperty(False)
+    crash_detected = BooleanProperty(False)
     phone = StringProperty("")
     email = StringProperty("")
     gps_data = StringProperty("")
+    
     x_crash_val = NumericProperty()
     y_crash_val = NumericProperty()
     z_crash_val = NumericProperty()
@@ -36,7 +39,7 @@ class AccelerometerWin(Screen):
 
     def do_toggle(self):
         screen = self.manager.get_screen("presplash")
-        self.phone = screen.ids.phone.text    
+        self.phone = screen.ids.phone.text   
 
         try:
             if not self.sensorEnabled:
@@ -81,9 +84,9 @@ class AccelerometerWin(Screen):
         
     def add_graph(self):
         self.graph = Graph(xmin=0, xmax=100, 
-                           ymin=-15, ymax=20,
+                           ymin=-60, ymax=70,
                            y_grid_label=True, x_grid_label=True,
-                           xlabel='', ylabel='')
+                           xlabel='Time', ylabel='Value')
         self.ids.graph_plot.add_widget(self.graph)
         self.ids.graph_plot.size_hint_y = .7
         
@@ -105,35 +108,37 @@ class AccelerometerWin(Screen):
             
     def get_acceleration(self, dt):
         val = accelerometer.acceleration[:3]
-        
-        if isinstance(App.get_running_app().root_window.children[0], Popup):
-            sms.send(recipient=self.phone, message="Accident Alert !\n\n' Crash Detected '\n\nGPS Location :\n\n"+self.gps_data)
-            
+
         if not val == (None, None, None):
             self.ids.x_label.text = "X axis : " + str(val[0])
             self.ids.y_label.text = "Y axis : " + str(val[1])
             self.ids.z_label.text = "Z axis : " + str(val[2])
             
-            if (abs(val[0])>25 or abs(val[1])>25 or abs(val[2])>35):
+            if (not self.crash_detected and (abs(val[0])>40 or abs(val[1])>40 or abs(val[2])>40)):
+                self.crash_detected = True
+                Clock.schedule_once(self.ensure_crash, 30)
                 Clock.schedule_once(self.test_crash, 20)
-                Clock.schedule_once(self.ensure_crash, 10)
 
-    def test_crash(self, dt):
-        val = accelerometer.acceleration[:3]
-        self.x_crash_val = abs(val[0]) + 0.1
-        self.y_crash_val = abs(val[1]) + 0.1
-        self.z_crash_val = abs(val[2]) + 0.1
-                    
-    
+                
     def ensure_crash(self, dt):
+        self.crash_detected = False
         val = accelerometer.acceleration[:3]
         x_val = self.x_crash_val - abs(val[0])
         y_val = self.y_crash_val - abs(val[1])
         z_val = self.z_crash_val - abs(val[2])
         
-        if (x_val < 0.1 and y_val < 0.1 and z_val < 0.1):
+        if (x_val<0.1 and y_val < 0.1 and z_val < 0.1):
+            sms.send(recipient=self.phone, message="Accident Alert !\n\n' Crash Detected '\n\nGPS Location :\n\n"+self.gps_data)
             popup = PopupWin()
             popup.open()
+            
+    def test_crash(self, *args):
+        val = accelerometer.acceleration[:3]
+        self.x_crash_val = abs(val[0]) + 0.1
+        self.y_crash_val = abs(val[1]) + 0.1
+        self.z_crash_val = abs(val[2]) + 0.1
+                    
+        
     
     def plot_acceleration(self, dt):
         if (self.counter == 100):
@@ -238,3 +243,4 @@ class AccidentAlertApp(App):
 
 if __name__ == '__main__':
     AccidentAlertApp().run()
+    
